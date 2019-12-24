@@ -2,7 +2,7 @@
 
 ## About this tool
 
-CSVファイルから各言語の`Localizable.strings`ファイルを作成します。
+CSVファイルから各言語の`Localizable.strings`ファイルを作成する
 
 ## Build 
 
@@ -35,6 +35,6 @@ Help Options:
 
 ## Issue 😫
 
-- [ ] 日英以外は未対応
+- [ ] 日英以外は仮対応
 - [ ] 前回との差分比較を行えるようにする
-- [ ] Base.lprojにコピーする
+- [ ] Base.lprojにen.lproj/Localizable.stringsをコピーする
