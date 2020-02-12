@@ -50,9 +50,3 @@ Application Options:
 Help Options:
   -h, --help                            Show this help message
 ```
-
-## Issue 😫
-
-- [ ] 日英以外は未対応
-- [ ] 前回との差分比較を行えるようにする
-- [ ] Base.lprojにコピーする
