@@ -8,12 +8,12 @@ import (
     "errors"
     "path/filepath"
     "strings"
-
+    "sync"
     "github.com/jessevdk/go-flags"
 )
 
 
-// グロッサリの順番が変わったときは修正必要
+// CSVの記載順
 const (
     KEY int = iota
     JP
@@ -52,11 +52,35 @@ const (
     KO
     TH
 )
+
+var createtDirectoryList = map[int]string{
+    JP: "ja.lproj",
+    EN: "en.lproj",
+    FR: "fr.lproj",
+    DE: "de.lproj",
+    IT: "it.lproj",
+    ES: "es.lproj",
+    PT_BR: "pt-BR.lproj",
+    NL: "nl.lproj",
+    DA: "da.lproj",
+    NO: "nb.lproj",
+    SV: "sv.lproj",
+    FI: "fi.lproj",
+    PL: "pl-PL.lproj",
+    CS: "cs.lproj",
+    RU: "ru.lproj",
+    TR: "tr.lproj",
+    SC: "zh-Hans.lproj",
+    TC: "zh-Hant.lproj",
+    KO: "ko.lproj",
+    TH: "th.lproj",
+}
+
 const OUTPUT_FILE_NAME = "Localizable.strings"
 
 var opts struct {
-    INPUT_FILE_PATH  	string `short:"f" long:"path" description:"LocalizeStringsファイルへ変換するCSVのパス" value-name:"INPUT_FILE_PATH" required:"true"`
-	OUTPUT_DIRECTORY_PATH	    string `short:"o" long:"output" default:"./" description:"ファイルの出力先" value-name:"OUTPUT_DIRECTORY_PATH" required:"true"`
+    INPUT_FILE_PATH  	string `short:"f" long:"path" default:"./resource/Localized.csv" description:"LocalizeStringsファイルへ変換するCSVのパス" value-name:"INPUT_FILE_PATH" required:"true"`
+	OUTPUT_DIRECTORY_PATH	    string `short:"o" long:"output" default:"./localize" description:"ファイルの出力先" value-name:"OUTPUT_DIRECTORY_PATH" required:"true"`
 }
 
 func main() {
@@ -98,65 +122,43 @@ func csvRead(filePath string, localizeTable *[][]string){
         (*localizeTable)[KEY] = append((*localizeTable)[KEY], record[KEY])
         (*localizeTable)[JP] = append((*localizeTable)[JP], record[JP])
         (*localizeTable)[EN] = append((*localizeTable)[EN], record[EN])
-
-        // 正式文言がくるまでENを使用
-        (*localizeTable)[FR] = append((*localizeTable)[FR], record[EN])
-        (*localizeTable)[DE] = append((*localizeTable)[DE], record[EN])
-        (*localizeTable)[IT] = append((*localizeTable)[IT], record[EN])
-        (*localizeTable)[ES] = append((*localizeTable)[ES], record[EN])
-        (*localizeTable)[PT_BR] = append((*localizeTable)[PT_BR], record[EN])
-        (*localizeTable)[NL] = append((*localizeTable)[NL], record[EN])
-        (*localizeTable)[DA] = append((*localizeTable)[DA], record[EN])
-        (*localizeTable)[NO] = append((*localizeTable)[NO], record[EN])
-        (*localizeTable)[SV] = append((*localizeTable)[SV], record[EN])
-        (*localizeTable)[FI] = append((*localizeTable)[FI], record[EN])
-        (*localizeTable)[PL] = append((*localizeTable)[PL], record[EN])
-        (*localizeTable)[CS] = append((*localizeTable)[CS], record[EN])
-        (*localizeTable)[RU] = append((*localizeTable)[RU], record[EN])
-        (*localizeTable)[TR] = append((*localizeTable)[TR], record[EN])
-        (*localizeTable)[SC] = append((*localizeTable)[SC], record[EN])
-        (*localizeTable)[TC] = append((*localizeTable)[TC], record[EN])
-        (*localizeTable)[KO] = append((*localizeTable)[KO], record[EN])
-        (*localizeTable)[TH] = append((*localizeTable)[TH], record[EN])
+        (*localizeTable)[FR] = append((*localizeTable)[FR], record[FR])
+        (*localizeTable)[DE] = append((*localizeTable)[DE], record[DE])
+        (*localizeTable)[IT] = append((*localizeTable)[IT], record[IT])
+        (*localizeTable)[ES] = append((*localizeTable)[ES], record[ES])
+        (*localizeTable)[PT_BR] = append((*localizeTable)[PT_BR], record[PT_BR])
+        (*localizeTable)[NL] = append((*localizeTable)[NL], record[NL])
+        (*localizeTable)[DA] = append((*localizeTable)[DA], record[DA])
+        (*localizeTable)[NO] = append((*localizeTable)[NO], record[NO])
+        (*localizeTable)[SV] = append((*localizeTable)[SV], record[SV])
+        (*localizeTable)[FI] = append((*localizeTable)[FI], record[FI])
+        (*localizeTable)[PL] = append((*localizeTable)[PL], record[PL])
+        (*localizeTable)[CS] = append((*localizeTable)[CS], record[CS])
+        (*localizeTable)[RU] = append((*localizeTable)[RU], record[RU])
+        (*localizeTable)[TR] = append((*localizeTable)[TR], record[TR])
+        (*localizeTable)[SC] = append((*localizeTable)[SC], record[SC])
+        (*localizeTable)[TC] = append((*localizeTable)[TC], record[TC])
+        (*localizeTable)[KO] = append((*localizeTable)[KO], record[KO])
+        (*localizeTable)[TH] = append((*localizeTable)[TH], record[TH])
     }
 }
 
 func outputLocalizeFile(localizeTable *[][]string){
+    // 非同期
+    var wg sync.WaitGroup
     for languageType, language := range *localizeTable {
         if languageType == KEY{
             continue
         } else if language != nil{
-            fp := createLocalizeFile(languageType)
-            writeLocarizeFile(fp, &(*localizeTable)[KEY], &language)
-            defer fp.Close()
+            wg.Add(1)
+            go createLocalizeFile(&wg, &(*localizeTable)[KEY], &language, languageType)
+            wg.Wait()
         }
     }
 }
 
  //ファイルの作成
-func createLocalizeFile(languageType int) *os.File {
-    createtDirectoryList := map[int]string{
-        JP: "ja.lproj",
-        EN: "en.lproj",
-        FR: "fr.lproj",
-        DE: "de.lproj",
-        IT: "it.lproj",
-        ES: "es.lproj",
-        PT_BR: "pt-BR.lproj",
-        NL: "nl.lproj",
-        DA: "da.lproj",
-        NO: "nb.lproj",
-        SV: "sv.lproj",
-        FI: "fi.lproj",
-        PL: "pl-PL.lproj",
-        CS: "cs.lproj",
-        RU: "ru.lproj",
-        TR: "tr.lproj",
-        SC: "zh-Hans.lproj",
-        TC: "zh-Hant.lproj",
-        KO: "ko.lproj",
-        TH: "th.lproj",
-    }
+func createLocalizeFile(wg *sync.WaitGroup, localizeTableKey *[]string, language *[]string,languageType int) {
 
     output_path := strings.TrimRight(opts.OUTPUT_DIRECTORY_PATH, "/")
     outputDirectoryPath := output_path + "/" + createtDirectoryList[languageType]
@@ -170,28 +172,26 @@ func createLocalizeFile(languageType int) *os.File {
     fp, err := os.OpenFile(outputDirectoryPath + "/" +  OUTPUT_FILE_NAME, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
     CheckIfError(err)
 
-    return fp
-}
-
-// ファイルの書き込み
-func writeLocarizeFile(fp *os.File, localizeTableKey *[]string, language *[]string){
     for index, word := range *language {
         if index != 0 {
-            // 文章中に半角の"が入ってたら置き換える
-            // 情メディアに直してもらった方が良い
+
+            // ローカライズ文言に3点リーダを一文字に置き換える
+            word = strings.Replace(word, "...", "…", -1) 
+            // ローカライズ文言に半角の"が入ってたら置き換える
             word = strings.Replace(word, "\"", "\\\"", -1) 
             fmt.Fprintln(fp, "\"" + (*localizeTableKey)[index] + "\" = " + "\"" + word + "\";") //書き込み
         }else{
             fmt.Fprintln(fp, "// " + (*localizeTableKey)[index] +  "=" + word)
         }
     }
+    defer fp.Close()
+    wg.Done() 
 }
 
 func CheckIfError(err error) {
 	if err == nil {
 		return
 	}
-
 	fmt.Printf("\x1b[31;1m%s\x1b[0m\n", fmt.Sprintf("error: %s", err))
 	os.Exit(1)
 }

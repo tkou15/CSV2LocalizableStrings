@@ -2,15 +2,33 @@
 
 ## About this tool
 
-CSVファイルから各言語の`Localizable.strings`ファイルを作成する
+CSVファイルから各言語の`Localizable.strings`ファイルを作成します
+
+## Install
+
+```
+$ brew install go
+```
+`.zshrc.`に以下を記述
+
+```
+export GOPATH=$HOME"/go"
+export PATH="$GOPATH/bin:$PATH"
+```
+このツールでつかっているライブラリのインストール
+```
+go get github.com/jessevdk/go-flags
+```
 
 ## Build 
 
 ```
-$ go build csv2LocalizableStrings.go
+$ go build -o ./bin
 ```
 
 ## Usage
+
+`CSVのフォーマットはCSV UTF-8(コンマ区切り)`
 
 カレントディレクトリに各言語の`Localizable.strings`を作成
 ```
@@ -35,6 +53,6 @@ Help Options:
 
 ## Issue 😫
 
-- [ ] 日英以外は仮対応
+- [ ] 日英以外は未対応
 - [ ] 前回との差分比較を行えるようにする
-- [ ] Base.lprojにen.lproj/Localizable.stringsをコピーする
+- [ ] Base.lprojにコピーする
